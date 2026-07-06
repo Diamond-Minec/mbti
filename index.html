@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MBTI人格测试</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeIn 0.5s ease-out;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useCallback } = React;
+
+    const questions = [
+      { id: 1, text: '我更喜欢和一群人聚会，而不是独处。', dimension: 'EI', direction: 'positive' },
+      { id: 2, text: '我通常更关注具体的事实和细节，而不是抽象的想法。', dimension: 'SN', direction: 'positive' },
+      { id: 3, text: '做决策时，我更倾向于基于逻辑和分析，而不是情感。', dimension: 'TF', direction: 'positive' },
+      { id: 4, text: '我喜欢有计划、有条理的生活方式。', dimension: 'JP', direction: 'positive' },
+      { id: 5, text: '遇到问题时，我更愿意独立思考解决，而不是寻求他人帮助。', dimension: 'EI', direction: 'negative' },
+      { id: 6, text: '我常常对未来的可能性充满想象，而不是专注于当下。', dimension: 'SN', direction: 'negative' },
+      { id: 7, text: '在团队合作中，我更重视人际关系的和谐。', dimension: 'TF', direction: 'negative' },
+      { id: 8, text: '我喜欢保持灵活，随时调整计划。', dimension: 'JP', direction: 'negative' },
+      { id: 9, text: '社交活动能给我带来能量。', dimension: 'EI', direction: 'positive' },
+      { id: 10, text: '我相信经验和传统的价值。', dimension: 'SN', direction: 'positive' },
+      { id: 11, text: '我认为公正比怜悯更重要。', dimension: 'TF', direction: 'positive' },
+      { id: 12, text: '我倾向于快速做出决定，然后坚持执行。', dimension: 'JP', direction: 'positive' },
+      { id: 13, text: '我需要独处的时间来充电。', dimension: 'EI', direction: 'negative' },
+      { id: 14, text: '我喜欢探索新的想法和概念。', dimension: 'SN', direction: 'negative' },
+      { id: 15, text: '我容易被他人的情绪所影响。', dimension: 'TF', direction: 'negative' },
+      { id: 16, text: '我喜欢把事情留到最后一刻再做。', dimension: 'JP', direction: 'negative' },
+      { id: 17, text: '我善于表达自己的想法和感受。', dimension: 'EI', direction: 'positive' },
+      { id: 18, text: '我更相信自己的感官体验。', dimension: 'SN', direction: 'positive' },
+      { id: 19, text: '我在争论中通常保持冷静和客观。', dimension: 'TF', direction: 'positive' },
+      { id: 20, text: '我喜欢提前规划和准备。', dimension: 'JP', direction: 'positive' },
+      { id: 21, text: '我更喜欢倾听而不是说话。', dimension: 'EI', direction: 'negative' },
+      { id: 22, text: '我常常有很多天马行空的想法。', dimension: 'SN', direction: 'negative' },
+    ];
+
+    const optionLabels = ['非常不符合', '不太符合', '中立', '比较符合', '非常符合'];
+
+    const mbtiResults = {
+      INTJ: {
+        type: 'INTJ',
+        analysis: 'INTJ 是独立、理性、富有远见的思想家。你善于分析复杂问题，制定长远规划，并坚持追求自己的目标。你重视知识和智慧，喜欢挑战传统观念。',
+        strengths: ['逻辑思维强', '富有远见', '独立自主', '善于分析', '坚持不懈'],
+        weaknesses: ['过于理性', '缺乏耐心', '不擅表达情感', '对他人期望过高'],
+        careers: ['战略规划师', '科学家', '工程师', '企业家', '数据分析师'],
+        famousPeople: ['阿尔伯特·爱因斯坦', '艾萨克·牛顿', '比尔·盖茨'],
+      },
+      INTP: {
+        type: 'INTP',
+        analysis: 'INTP 是好奇、灵活、善于思考的理论家。你对知识充满渴望，喜欢探索各种可能性，享受智力上的挑战。你重视逻辑和真理，常常提出创新性的解决方案。',
+        strengths: ['好奇心强', '逻辑清晰', '善于创新', '开放思维', '独立思考'],
+        weaknesses: ['缺乏条理', '拖延倾向', '不擅社交', '对细节不敏感'],
+        careers: ['程序员', '物理学家', '哲学家', '设计师', '研究员'],
+        famousPeople: ['理查德·费曼', '苏格拉底', '马克·扎克伯格'],
+      },
+      ENTJ: {
+        type: 'ENTJ',
+        analysis: 'ENTJ 是果断、自信、富有领导力的决策者。你善于组织和管理，能够快速做出决策并推动执行。你重视效率和结果，是天生的领导者。',
+        strengths: ['领导力强', '决策果断', '目标导向', '善于规划', '自信满满'],
+        weaknesses: ['过于强势', '缺乏耐心', '忽视细节', '对他人感受不敏感'],
+        careers: ['CEO', '管理者', '律师', '政治家', '项目经理'],
+        famousPeople: ['史蒂夫·乔布斯', '玛格丽特·撒切尔', '拿破仑'],
+      },
+      ENTP: {
+        type: 'ENTP',
+        analysis: 'ENTP 是机智、灵活、富有创造力的辩论家。你善于提出新想法，挑战传统观念，享受智力上的交锋。你适应性强，能够快速应对变化。',
+        strengths: ['富有创意', '机智敏捷', '善于沟通', '适应力强', '好奇心旺盛'],
+        weaknesses: ['缺乏专注', '虎头蛇尾', '过于自信', '忽视他人感受'],
+        careers: ['创业家', '市场营销', '律师', '咨询师', '产品经理'],
+        famousPeople: ['本杰明·富兰克林', '列奥纳多·达·芬奇', '埃隆·马斯克'],
+      },
+      INFJ: {
+        type: 'INFJ',
+        analysis: 'INFJ 是富有洞察力、同理心强、追求意义的守护者。你善于理解他人的内心世界，渴望帮助他人实现潜能。你重视和谐与正义，有强烈的价值观。',
+        strengths: ['同理心强', '富有洞察力', '善于倾听', '忠诚可靠', '有远见'],
+        weaknesses: ['过于理想主义', '容易疲惫', '难以拒绝他人', '对批评敏感'],
+        careers: ['心理咨询师', '社会工作者', '教育工作者', '作家', '艺术指导'],
+        famousPeople: ['卡尔·荣格', '特蕾莎修女', '马丁·路德·金'],
+      },
+      INFP: {
+        type: 'INFP',
+        analysis: 'INFP 是理想主义、富有创造力、忠于自我的治愈者。你重视个人价值观，追求内心的真实与美好。你善于表达情感，富有艺术天赋。',
+        strengths: ['富有创意', '真诚善良', '忠于自我', '善于表达', '富有想象力'],
+        weaknesses: ['过于敏感', '犹豫不决', '逃避冲突', '不切实际'],
+        careers: ['作家', '艺术家', '心理咨询师', '教师', '非营利组织工作者'],
+        famousPeople: ['威廉·莎士比亚', '弗吉尼亚·伍尔夫', '约翰·列侬'],
+      },
+      ENFJ: {
+        type: 'ENFJ',
+        analysis: 'ENFJ 是热情、有魅力、善于激励他人的教育家。你善于与人交往，能够激发他人的潜能。你重视人际关系，是天生的领导者和导师。',
+        strengths: ['善于沟通', '富有魅力', '激励他人', '热情洋溢', '有责任心'],
+        weaknesses: ['过于理想化', '难以拒绝', '忽视自身需求', '对批评敏感'],
+        careers: ['教师', '培训师', '人力资源', '市场营销', '政治家'],
+        famousPeople: ['奥普拉·温弗瑞', '纳尔逊·曼德拉', '杰基·肯尼迪'],
+      },
+      ENFP: {
+        type: 'ENFP',
+        analysis: 'ENFP 是热情、富有创意、善于社交的梦想家。你对生活充满热情，善于发现可能性，享受与人交往。你重视个人成长和自我实现。',
+        strengths: ['热情洋溢', '富有创意', '善于社交', '乐观积极', '适应性强'],
+        weaknesses: ['缺乏专注', '情绪波动', '难以坚持', '过于乐观'],
+        careers: ['市场营销', '公关', '创业家', '设计师', '作家'],
+        famousPeople: ['沃尔特·迪士尼', '玛丽·居里', '巴拉克·奥巴马'],
+      },
+      ISTJ: {
+        type: 'ISTJ',
+        analysis: 'ISTJ 是可靠、务实、注重秩序的守护者。你重视传统和责任，善于组织和执行任务。你是值得信赖的人，喜欢按规则办事。',
+        strengths: ['可靠踏实', '善于组织', '责任心强', '注重细节', '务实理性'],
+        weaknesses: ['过于保守', '不擅变通', '缺乏想象力', '对变化敏感'],
+        careers: ['会计', '工程师', '警察', '项目经理', '行政人员'],
+        famousPeople: ['乔治·华盛顿', '阿尔伯特·施韦泽', '希拉里·克林顿'],
+      },
+      ISFJ: {
+        type: 'ISFJ',
+        analysis: 'ISFJ 是温暖、体贴、富有责任心的保护者。你善于照顾他人，重视家庭和传统。你是可靠的朋友和家人，总是默默付出。',
+        strengths: ['体贴入微', '富有责任心', '善于照顾他人', '忠诚可靠', '务实稳重'],
+        weaknesses: ['过于牺牲自我', '难以拒绝', '对批评敏感', '不擅表达需求'],
+        careers: ['护士', '教师', '社会工作者', '行政助理', '家庭主妇'],
+        famousPeople: ['戴安娜王妃', '甘地', '特蕾莎修女'],
+      },
+      ESTJ: {
+        type: 'ESTJ',
+        analysis: 'ESTJ 是务实、高效、善于组织的管理者。你重视秩序和效率，能够快速做出决策并推动执行。你是天生的领导者，善于管理团队。',
+        strengths: ['善于组织', '决策果断', '务实高效', '责任心强', '公正公平'],
+        weaknesses: ['过于强势', '缺乏耐心', '忽视他人感受', '不擅变通'],
+        careers: ['管理者', '企业家', '军人', '律师', '会计师'],
+        famousPeople: ['乔治·布什', '玛格丽特·撒切尔', '安德鲁·卡内基'],
+      },
+      ESFJ: {
+        type: 'ESFJ',
+        analysis: 'ESFJ 是热情、友好、善于社交的东道主。你重视人际关系，善于照顾他人，喜欢营造和谐的氛围。你是团队中的粘合剂。',
+        strengths: ['热情友好', '善于社交', '体贴入微', '富有责任心', '组织能力强'],
+        weaknesses: ['过于在意他人看法', '难以拒绝', '忽视自身需求', '不擅冲突'],
+        careers: ['人力资源', '销售', '教师', '公关', '活动策划'],
+        famousPeople: ['埃莉诺·罗斯福', '朱莉娅·查尔德', '麦当娜'],
+      },
+      ISTP: {
+        type: 'ISTP',
+        analysis: 'ISTP 是冷静、务实、善于动手的实干家。你善于分析问题，喜欢动手实践，能够快速找到解决方案。你是天生的工程师和修理工。',
+        strengths: ['动手能力强', '冷静理性', '善于分析', '务实高效', '适应性强'],
+        weaknesses: ['不善表达情感', '缺乏耐心', '对规划不感兴趣', '容易冲动'],
+        careers: ['工程师', '技师', '运动员', '侦探', '军人'],
+        famousPeople: ['史蒂夫·沃兹尼亚克', '李小龙', '巴勃罗·毕加索'],
+      },
+      ISFP: {
+        type: 'ISFP',
+        analysis: 'ISFP 是温柔、敏感、富有艺术天赋的艺术家。你重视个人感受，善于通过艺术表达自己。你是自由奔放的灵魂，追求真实与美好。',
+        strengths: ['艺术天赋', '温柔体贴', '真诚善良', '善于观察', '灵活应变'],
+        weaknesses: ['过于敏感', '难以决策', '逃避冲突', '不擅规划'],
+        careers: ['艺术家', '设计师', '摄影师', '音乐家', '园艺师'],
+        famousPeople: ['迈克尔·杰克逊', '奥黛丽·赫本', '文森特·梵高'],
+      },
+      ESTP: {
+        type: 'ESTP',
+        analysis: 'ESTP 是活力充沛、善于社交、敢于冒险的挑战者。你喜欢行动和刺激，善于应对变化。你是天生的推销员和谈判者。',
+        strengths: ['活力充沛', '善于社交', '敢于冒险', '务实高效', '应变能力强'],
+        weaknesses: ['缺乏耐心', '容易冲动', '忽视长远规划', '对细节不敏感'],
+        careers: ['销售', '企业家', '运动员', '警察', '经纪人'],
+        famousPeople: ['唐纳德·特朗普', '穆罕默德·阿里', '麦当娜'],
+      },
+      ESFP: {
+        type: 'ESFP',
+        analysis: 'ESFP 是热情、活泼、善于表演的表演者。你喜欢成为焦点，善于与人交往，享受生活的乐趣。你是派对的灵魂人物。',
+        strengths: ['热情活泼', '善于表演', '亲和力强', '乐观积极', '善于沟通'],
+        weaknesses: ['缺乏耐心', '注意力不集中', '难以坚持', '过于在意他人看法'],
+        careers: ['演员', '歌手', '销售', '公关', '活动策划'],
+        famousPeople: ['玛丽莲·梦露', '埃尔维斯·普雷斯利', '金·卡戴珊'],
+      },
+    };
+
+    function calculateResult(answers) {
+      const dimensionScores = { EI: 0, SN: 0, TF: 0, JP: 0 };
+      answers.forEach((answer) => {
+        const question = questions.find((q) => q.id === answer.questionId);
+        if (!question) return;
+        const baseScore = answer.choice;
+        const adjustedScore = question.direction === 'positive' ? baseScore : (6 - baseScore);
+        dimensionScores[question.dimension] += adjustedScore;
+      });
+      const dimensions = [
+        { dimension: 'EI', score: dimensionScores.EI, type: dimensionScores.EI > 33 ? '外向(E)' : '内向(I)' },
+        { dimension: 'SN', score: dimensionScores.SN, type: dimensionScores.SN > 33 ? '感觉(S)' : '直觉(N)' },
+        { dimension: 'TF', score: dimensionScores.TF, type: dimensionScores.TF > 33 ? '思考(T)' : '情感(F)' },
+        { dimension: 'JP', score: dimensionScores.JP, type: dimensionScores.JP > 33 ? '判断(J)' : '感知(P)' },
+      ];
+      const type = dimensions.map((d) => d.type.charAt(0)).join('');
+      const result = mbtiResults[type] || mbtiResults.INTJ;
+      return { ...result, dimensions };
+    }
+
+    function Home({ onStart }) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-violet-600 via-purple-600 to-pink-500 flex items-center justify-center p-4">
+          <div className="max-w-md w-full fade-in">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full mb-6">
+                <span className="text-4xl font-bold text-white">MBTI</span>
+              </div>
+              <h1 className="text-3xl font-bold text-white mb-4">人格测试</h1>
+              <p className="text-white/80 text-sm">通过22道题，探索你的性格类型</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 mb-8">
+              <h2 className="text-white font-semibold mb-4">什么是 MBTI?</h2>
+              <p className="text-white/70 text-sm leading-relaxed mb-4">
+                MBTI (Myers-Briggs Type Indicator) 是一种广泛使用的人格测试工具，
+                通过四个维度来描述一个人的性格偏好。
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white/10 rounded-lg p-3 text-center">
+                  <p className="text-white font-bold">E / I</p>
+                  <p className="text-white/60 text-xs">外向 / 内向</p>
+                </div>
+                <div className="bg-white/10 rounded-lg p-3 text-center">
+                  <p className="text-white font-bold">S / N</p>
+                  <p className="text-white/60 text-xs">感觉 / 直觉</p>
+                </div>
+                <div className="bg-white/10 rounded-lg p-3 text-center">
+                  <p className="text-white font-bold">T / F</p>
+                  <p className="text-white/60 text-xs">思考 / 情感</p>
+                </div>
+                <div className="bg-white/10 rounded-lg p-3 text-center">
+                  <p className="text-white font-bold">J / P</p>
+                  <p className="text-white/60 text-xs">判断 / 感知</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 mb-8">
+              <h2 className="text-white font-semibold mb-4">测试说明</h2>
+              <ul className="space-y-2 text-white/70 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-pink-300">*</span>
+                  <span>共22道题目，预计用时5分钟</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-pink-300">*</span>
+                  <span>每题有5个选项，请选择最符合你的描述</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-pink-300">*</span>
+                  <span>请根据第一反应作答，无需过多思考</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-pink-300">*</span>
+                  <span>测试结果仅供参考</span>
+                </li>
+              </ul>
+            </div>
+            <button
+              onClick={onStart}
+              className="w-full py-4 bg-white text-violet-600 font-semibold rounded-xl
+                         hover:bg-violet-50 transition-all duration-300 transform hover:scale-[1.02]
+                         shadow-lg shadow-violet-600/30"
+            >
+              开始测试
+            </button>
+            <p className="text-white/50 text-xs text-center mt-4">
+              已有超过 1000 万人完成测试
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    function QuestionCard({ question, questionNumber, totalQuestions, onSelect }) {
+      const options = [1, 2, 3, 4, 5];
+      return (
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-gradient-to-r from-violet-500 to-pink-500 p-4">
+            <div className="flex items-center justify-between text-white">
+              <span className="text-sm font-medium">第 {questionNumber} / {totalQuestions} 题</span>
+              <span className="text-xs bg-white/20 px-3 py-1 rounded-full">{question.dimension}</span>
+            </div>
+          </div>
+          <div className="p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-6 text-center">{question.text}</h3>
+            <div className="space-y-3">
+              {options.map((option) => (
+                <button
+                  key={option}
+                  onClick={() => onSelect(option)}
+                  className="w-full py-3 px-4 bg-gray-50 hover:bg-violet-50 
+                             border-2 border-transparent hover:border-violet-300
+                             rounded-xl transition-all duration-200 transform hover:scale-[1.02]
+                             flex items-center justify-between group"
+                >
+                  <span className="text-gray-700 font-medium group-hover:text-violet-700">
+                    {optionLabels[option - 1]}
+                  </span>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center
+                                ${option === 1 ? 'bg-red-100 text-red-500' : ''}
+                                ${option === 2 ? 'bg-orange-100 text-orange-500' : ''}
+                                ${option === 3 ? 'bg-yellow-100 text-yellow-500' : ''}
+                                ${option === 4 ? 'bg-blue-100 text-blue-500' : ''}
+                                ${option === 5 ? 'bg-green-100 text-green-500' : ''}`}>
+                    {option}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function Quiz({ currentQuestion, currentQuestionIndex, totalQuestions, progress, onSelect }) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-violet-600 via-purple-600 to-pink-500 flex items-center justify-center p-4">
+          <div className="max-w-md w-full fade-in">
+            <div className="mb-6">
+              <div className="flex items-center justify-between text-white/80 text-sm mb-2">
+                <span>答题进度</span>
+                <span>{Math.round(progress)}%</span>
+              </div>
+              <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-white rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+            <QuestionCard
+              question={currentQuestion}
+              questionNumber={currentQuestionIndex + 1}
+              totalQuestions={totalQuestions}
+              onSelect={onSelect}
+            />
+            <p className="text-white/50 text-xs text-center mt-6">
+              请根据你的第一反应选择最符合的选项
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    function Result({ result, onRestart }) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-violet-600 via-purple-600 to-pink-500 py-8 px-4">
+          <div className="max-w-md w-full mx-auto fade-in">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full mb-4">
+                <span className="text-5xl font-bold text-white">{result.type}</span>
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-2">测试结果</h1>
+              <p className="text-white/70 text-sm">你的人格类型</p>
+            </div>
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden mb-6">
+              <div className="bg-gradient-to-r from-violet-500 to-pink-500 p-4">
+                <h2 className="text-white font-semibold">类型分析</h2>
+              </div>
+              <div className="p-6">
+                <p className="text-gray-600 leading-relaxed mb-4">{result.analysis}</p>
+                <div className="grid grid-cols-4 gap-2 mb-6">
+                  {result.dimensions.map((dim) => (
+                    <div key={dim.dimension} className="bg-violet-50 rounded-lg p-3 text-center">
+                      <p className="text-violet-600 font-bold text-sm">{dim.type.charAt(0)}</p>
+                      <p className="text-gray-500 text-xs">{dim.type.slice(2)}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mb-6">
+                  <h3 className="text-gray-800 font-semibold mb-3">性格维度得分</h3>
+                  {result.dimensions.map((dim) => (
+                    <div key={dim.dimension} className="mb-3">
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="text-gray-600">{dim.type}</span>
+                        <span className="text-violet-600 font-medium">{dim.score}/44</span>
+                      </div>
+                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-violet-400 to-pink-400 rounded-full"
+                          style={{ width: `${(dim.score / 44) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="bg-green-50 rounded-xl p-4">
+                    <h3 className="text-green-600 font-semibold text-sm mb-2">优势</h3>
+                    <ul className="space-y-1">
+                      {result.strengths.slice(0, 4).map((strength, index) => (
+                        <li key={index} className="text-gray-600 text-xs flex items-center gap-1">
+                          <span className="text-green-500">+</span>
+                          {strength}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="bg-orange-50 rounded-xl p-4">
+                    <h3 className="text-orange-600 font-semibold text-sm mb-2">待提升</h3>
+                    <ul className="space-y-1">
+                      {result.weaknesses.slice(0, 4).map((weakness, index) => (
+                        <li key={index} className="text-gray-600 text-xs flex items-center gap-1">
+                          <span className="text-orange-500">-</span>
+                          {weakness}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                <div className="mb-6">
+                  <h3 className="text-gray-800 font-semibold mb-3">适合的职业</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {result.careers.slice(0, 6).map((career, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-purple-100 text-purple-600 rounded-full text-xs"
+                      >
+                        {career}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-gray-800 font-semibold mb-3">代表人物</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {result.famousPeople.map((person, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-xs"
+                      >
+                        {person}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={onRestart}
+              className="w-full py-4 bg-white text-violet-600 font-semibold rounded-xl
+                         hover:bg-violet-50 transition-all duration-300 transform hover:scale-[1.02]
+                         shadow-lg shadow-violet-600/30 mb-4"
+            >
+              重新测试
+            </button>
+            <p className="text-white/50 text-xs text-center">
+              测试结果仅供参考，每个人都是独一无二的
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [currentPage, setCurrentPage] = useState('home');
+      const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+      const [answers, setAnswers] = useState([]);
+      const [result, setResult] = useState(null);
+
+      const startQuiz = useCallback(() => {
+        setCurrentPage('quiz');
+        setCurrentQuestionIndex(0);
+        setAnswers([]);
+        setResult(null);
+      }, []);
+
+      const goHome = useCallback(() => {
+        setCurrentPage('home');
+        setCurrentQuestionIndex(0);
+        setAnswers([]);
+        setResult(null);
+      }, []);
+
+      const selectAnswer = useCallback((choice) => {
+        const currentQuestion = questions[currentQuestionIndex];
+        const newAnswers = [...answers, { questionId: currentQuestion.id, choice }];
+        setAnswers(newAnswers);
+
+        if (currentQuestionIndex < questions.length - 1) {
+          setCurrentQuestionIndex((prev) => prev + 1);
+        } else {
+          const calculatedResult = calculateResult(newAnswers);
+          setResult(calculatedResult);
+          setCurrentPage('result');
+        }
+      }, [currentQuestionIndex, answers]);
+
+      const currentQuestion = questions[currentQuestionIndex];
+      const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+
+      if (currentPage === 'home') {
+        return <Home onStart={startQuiz} />;
+      }
+
+      if (currentPage === 'quiz' && currentQuestion) {
+        return (
+          <Quiz
+            currentQuestion={currentQuestion}
+            currentQuestionIndex={currentQuestionIndex}
+            totalQuestions={questions.length}
+            progress={progress}
+            onSelect={selectAnswer}
+          />
+        );
+      }
+
+      if (currentPage === 'result' && result) {
+        return <Result result={result} onRestart={goHome} />;
+      }
+
+      return null;
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
